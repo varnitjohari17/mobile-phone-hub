@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>📱 Phone Shop Manager</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --card: #21253a;
+    --border: #2e3354;
+    --accent: #4f6ef7;
+    --accent2: #7c3aed;
+    --green: #10b981;
+    --red: #ef4444;
+    --orange: #f59e0b;
+    --text: #e8eaf6;
+    --muted: #8891b4;
+    --white: #ffffff;
+    --gradient: linear-gradient(135deg, #4f6ef7, #7c3aed);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',Arial,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+  /* HEADER */
+  .header { background:var(--surface); border-bottom:1px solid var(--border); padding:0 24px; display:flex; align-items:center; justify-content:space-between; height:64px; position:sticky; top:0; z-index:100; }
+  .logo { display:flex; align-items:center; gap:12px; }
+  .logo-icon { width:38px; height:38px; background:var(--gradient); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px; }
+  .logo-text { font-size:18px; font-weight:700; letter-spacing:0.5px; }
+  .logo-sub { font-size:11px; color:var(--muted); }
+  .header-right { display:flex; gap:10px; }
+  .btn-hdr { background:var(--card); border:1px solid var(--border); color:var(--text); padding:7px 16px; border-radius:8px; cursor:pointer; font-size:13px; transition:all .2s; display:flex; align-items:center; gap:6px; }
+  .btn-hdr:hover { border-color:var(--accent); color:var(--accent); }
+  .btn-hdr.accent { background:var(--gradient); border:none; color:#fff; }
+  .btn-hdr.accent:hover { opacity:.9; color:#fff; }
+
+  /* NAV TABS */
+  .nav-tabs { background:var(--surface); border-bottom:1px solid var(--border); display:flex; padding:0 24px; gap:4px; }
+  .tab { padding:14px 20px; cursor:pointer; font-size:14px; color:var(--muted); border-bottom:2px solid transparent; transition:all .2s; display:flex; align-items:center; gap:7px; white-space:nowrap; }
+  .tab:hover { color:var(--text); }
+  .tab.active { color:var(--accent); border-bottom-color:var(--accent); font-weight:600; }
+  .tab .badge { background:var(--accent); color:#fff; border-radius:10px; padding:1px 7px; font-size:11px; font-weight:700; }
+
+  /* LAYOUT */
+  .main { padding:24px; max-width:1400px; margin:0 auto; }
+  .page { display:none; }
+  .page.active { display:block; }
+
+  /* DASHBOARD */
+  .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin-bottom:28px; }
+  .stat-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px; display:flex; align-items:center; gap:16px; }
+  .stat-icon { width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
+  .stat-icon.blue { background:rgba(79,110,247,.18); }
+  .stat-icon.green { background:rgba(16,185,129,.18); }
+  .stat-icon.orange { background:rgba(245,158,11,.18); }
+  .stat-icon.purple { background:rgba(124,58,237,.18); }
+  .stat-val { font-size:26px; font-weight:700; line-height:1; }
+  .stat-label { font-size:12px; color:var(--muted); margin-top:4px; }
+
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  @media(max-width:900px){ .grid-2{ grid-template-columns:1fr; } }
+
+  /* CARDS */
+  .card { background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+  .card-header { padding:16px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+  .card-title { font-size:15px; font-weight:600; display:flex; align-items:center; gap:8px; }
+  .card-body { padding:20px; }
+
+  /* FORMS */
+  .form-section { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:24px; margin-bottom:20px; }
+  .form-title { font-size:16px; font-weight:700; margin-bottom:20px; display:flex; align-items:center; gap:8px; }
+  .form-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; }
+  .form-group { display:flex; flex-direction:column; gap:6px; }
+  .form-group label { font-size:12px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
+  .form-group input, .form-group select, .form-group textarea {
+    background:var(--surface); border:1px solid var(--border); color:var(--text);
+    padding:10px 14px; border-radius:9px; font-size:14px; font-family:inherit; transition:border-color .2s;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline:none; border-color:var(--accent); }
+  .form-group textarea { resize:vertical; min-height:80px; }
+  .form-group select option { background:var(--surface); }
+  .form-actions { margin-top:20px; display:flex; gap:10px; }
+
+  /* BUTTONS */
+  .btn { padding:10px 22px; border-radius:9px; cursor:pointer; font-size:14px; font-weight:600; border:none; transition:all .2s; display:inline-flex; align-items:center; gap:7px; }
+  .btn-primary { background:var(--gradient); color:#fff; }
+  .btn-primary:hover { opacity:.9; transform:translateY(-1px); }
+  .btn-secondary { background:var(--surface); border:1px solid var(--border); color:var(--text); }
+  .btn-secondary:hover { border-color:var(--accent); color:var(--accent); }
+  .btn-success { background:var(--green); color:#fff; }
+  .btn-success:hover { opacity:.9; }
+  .btn-danger { background:var(--red); color:#fff; }
+  .btn-danger:hover { opacity:.9; }
+  .btn-sm { padding:6px 14px; font-size:12px; border-radius:7px; }
+  .btn-icon { background:transparent; border:1px solid var(--border); color:var(--muted); padding:6px 10px; border-radius:7px; cursor:pointer; transition:all .2s; }
+  .btn-icon:hover { border-color:var(--accent); color:var(--accent); }
+
+  /* TABLE */
+  .table-wrap { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; font-size:13.5px; }
+  th { background:var(--surface); color:var(--muted); font-weight:600; text-transform:uppercase; font-size:11px; letter-spacing:.5px; padding:11px 14px; text-align:left; border-bottom:1px solid var(--border); white-space:nowrap; }
+  td { padding:12px 14px; border-bottom:1px solid var(--border); vertical-align:middle; }
+  tr:hover td { background:rgba(79,110,247,.04); }
+  tr:last-child td { border-bottom:none; }
+
+  /* BADGES */
+  .badge { padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; display:inline-block; }
+  .badge-dealer { background:rgba(79,110,247,.2); color:#7c9fff; }
+  .badge-cashify { background:rgba(245,158,11,.2); color:#f59e0b; }
+  .badge-customer { background:rgba(16,185,129,.2); color:#10b981; }
+  .badge-sold { background:rgba(16,185,129,.2); color:#10b981; }
+  .badge-stock { background:rgba(79,110,247,.2); color:#7c9fff; }
+  .badge-repair { background:rgba(245,158,11,.2); color:#f59e0b; }
+
+  /* SEARCH BAR */
+  .search-bar { display:flex; gap:10px; margin-bottom:16px; }
+  .search-input { flex:1; background:var(--surface); border:1px solid var(--border); color:var(--text); padding:9px 14px; border-radius:9px; font-size:14px; }
+  .search-input:focus { outline:none; border-color:var(--accent); }
+
+  /* BILL MODAL */
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:1000; display:none; align-items:center; justify-content:center; padding:20px; }
+  .modal-overlay.open { display:flex; }
+  .modal { background:#fff; color:#111; border-radius:14px; width:100%; max-width:680px; max-height:90vh; overflow-y:auto; }
+  .modal-header { padding:20px 24px; border-bottom:1px solid #e5e7eb; display:flex; justify-content:space-between; align-items:center; }
+  .modal-close { background:none; border:none; font-size:22px; cursor:pointer; color:#666; }
+  .modal-body { padding:24px; }
+
+  /* BILL PRINT AREA */
+  .bill { font-family:'Segoe UI',Arial,sans-serif; }
+  .bill-header { text-align:center; margin-bottom:20px; border-bottom:2px solid #222; padding-bottom:16px; }
+  .bill-shop-name { font-size:24px; font-weight:800; letter-spacing:1px; }
+  .bill-tagline { color:#555; font-size:13px; margin-top:4px; }
+  .bill-contact { font-size:12px; color:#666; margin-top:6px; }
+  .bill-meta { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px; font-size:13px; }
+  .bill-meta-item { display:flex; flex-direction:column; gap:2px; }
+  .bill-meta-item .label { font-size:11px; color:#666; font-weight:600; text-transform:uppercase; }
+  .bill-items { width:100%; border-collapse:collapse; margin:16px 0; }
+  .bill-items th { background:#f3f4f6; padding:8px 12px; text-align:left; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; border:1px solid #e5e7eb; }
+  .bill-items td { padding:9px 12px; border:1px solid #e5e7eb; font-size:13px; }
+  .bill-total { text-align:right; margin-top:10px; }
+  .bill-total-row { display:flex; justify-content:flex-end; gap:30px; padding:5px 0; font-size:14px; }
+  .bill-total-row.grand { font-size:17px; font-weight:800; border-top:2px solid #222; padding-top:8px; margin-top:5px; }
+  .bill-footer { margin-top:20px; border-top:1px solid #e5e7eb; padding-top:14px; text-align:center; font-size:12px; color:#666; }
+  .bill-signature { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:30px; text-align:center; font-size:12px; }
+  .bill-sign-line { border-top:1px solid #999; padding-top:6px; color:#555; }
+
+  /* TOAST */
+  .toast-container { position:fixed; bottom:24px; right:24px; z-index:9999; display:flex; flex-direction:column; gap:8px; }
+  .toast { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 18px; font-size:13.5px; box-shadow:0 4px 20px rgba(0,0,0,.3); animation:slideIn .3s ease; display:flex; align-items:center; gap:10px; min-width:260px; }
+  .toast.success { border-left:3px solid var(--green); }
+  .toast.error { border-left:3px solid var(--red); }
+  .toast.info { border-left:3px solid var(--accent); }
+  @keyframes slideIn { from{transform:translateX(100%);opacity:0;} to{transform:translateX(0);opacity:1;} }
+
+  /* EMPTY STATE */
+  .empty { text-align:center; padding:50px 20px; color:var(--muted); }
+  .empty .icon { font-size:50px; margin-bottom:12px; }
+
+  /* PROFIT/LOSS INDICATOR */
+  .profit { color:var(--green); font-weight:700; }
+  .loss { color:var(--red); font-weight:700; }
+
+  /* DIVIDER */
+  .divider { height:1px; background:var(--border); margin:20px 0; }
+
+  /* SCROLL */
+  ::-webkit-scrollbar { width:6px; height:6px; }
+  ::-webkit-scrollbar-track { background:var(--bg); }
+  ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
+  @media print {
+    body * { visibility:hidden; }
+    #printArea, #printArea * { visibility:visible; }
+    #printArea { position:fixed; top:0; left:0; width:100%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon">📱</div>
+    <div>
+      <div class="logo-text">Phone Shop Manager</div>
+      <div class="logo-sub">Second Hand Phone Store</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <button class="btn-hdr" onclick="exportAllToExcel()">⬇ Export Excel</button>
+    <button class="btn-hdr accent" onclick="openImportModal()">⬆ Import Excel</button>
+  </div>
+</div>
+
+<!-- NAV TABS -->
+<div class="nav-tabs">
+  <div class="tab active" onclick="showPage('dashboard')">📊 Dashboard</div>
+  <div class="tab" onclick="showPage('stock-in')">📥 Stock In</div>
+  <div class="tab" onclick="showPage('stock-list')">📦 Inventory <span class="badge" id="stockBadge">0</span></div>
+  <div class="tab" onclick="showPage('sell')">💰 Sell Phone</div>
+  <div class="tab" onclick="showPage('sales-list')">🧾 Sales <span class="badge" id="salesBadge">0</span></div>
+  <div class="tab" onclick="showPage('bills')">🖨 Bills</div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+
+  <!-- ==================== DASHBOARD ==================== -->
+  <div class="page active" id="page-dashboard">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon blue">📦</div>
+        <div>
+          <div class="stat-val" id="totalStock">0</div>
+          <div class="stat-label">Total in Stock</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green">💰</div>
+        <div>
+          <div class="stat-val" id="totalSales">0</div>
+          <div class="stat-label">Phones Sold</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon orange">📈</div>
+        <div>
+          <div class="stat-val" id="totalRevenue">₹0</div>
+          <div class="stat-label">Total Revenue</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon purple">💵</div>
+        <div>
+          <div class="stat-val" id="totalProfit">₹0</div>
+          <div class="stat-label">Net Profit</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📥 Recent Stock In</div>
+          <button class="btn btn-secondary btn-sm" onclick="showPage('stock-in')">+ Add Stock</button>
+        </div>
+        <div class="card-body" style="padding:0;">
+          <div class="table-wrap">
+            <table id="dashStockTable">
+              <thead><tr><th>Brand/Model</th><th>Source</th><th>Buy Price</th><th>Date</th></tr></thead>
+              <tbody id="dashStockBody"><tr><td colspan="4"><div class="empty"><div class="icon">📦</div>No stock yet</div></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">💰 Recent Sales</div>
+          <button class="btn btn-secondary btn-sm" onclick="showPage('sell')">+ New Sale</button>
+        </div>
+        <div class="card-body" style="padding:0;">
+          <div class="table-wrap">
+            <table id="dashSalesTable">
+              <thead><tr><th>Phone</th><th>Customer</th><th>Sell Price</th><th>Date</th></tr></thead>
+              <tbody id="dashSalesBody"><tr><td colspan="4"><div class="empty"><div class="icon">💰</div>No sales yet</div></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== STOCK IN ==================== -->
+  <div class="page" id="page-stock-in">
+    <div class="form-section">
+      <div class="form-title">📥 Add Phone to Inventory</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Source / Supplier</label>
+          <select id="si_source">
+            <option value="">Select Source</option>
+            <option value="Dealer">Dealer</option>
+            <option value="Cashify">Cashify</option>
+            <option value="Customer">Customer (Exchange/Buy)</option>
+            <option value="OLX">OLX</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Supplier / Person Name</label>
+          <input type="text" id="si_supplierName" placeholder="e.g. Raju Dealer / Cashify Ref"/>
+        </div>
+        <div class="form-group">
+          <label>Supplier Mobile</label>
+          <input type="tel" id="si_supplierMobile" placeholder="10-digit number"/>
+        </div>
+        <div class="form-group">
+          <label>Brand</label>
+          <select id="si_brand" onchange="filterModels()">
+            <option value="">Select Brand</option>
+            <option>Samsung</option><option>Apple</option><option>OnePlus</option>
+            <option>Xiaomi / Redmi</option><option>Realme</option><option>Vivo</option>
+            <option>Oppo</option><option>Motorola</option><option>Nokia</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Model Name</label>
+          <input type="text" id="si_model" placeholder="e.g. Galaxy A54, iPhone 13"/>
+        </div>
+        <div class="form-group">
+          <label>Color</label>
+          <input type="text" id="si_color" placeholder="e.g. Black, Blue"/>
+        </div>
+        <div class="form-group">
+          <label>Storage (GB)</label>
+          <select id="si_storage">
+            <option value="">Select</option>
+            <option>16 GB</option><option>32 GB</option><option>64 GB</option>
+            <option>128 GB</option><option>256 GB</option><option>512 GB</option><option>1 TB</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>RAM (GB)</label>
+          <select id="si_ram">
+            <option value="">Select</option>
+            <option>2 GB</option><option>3 GB</option><option>4 GB</option>
+            <option>6 GB</option><option>8 GB</option><option>12 GB</option><option>16 GB</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>IMEI Number</label>
+          <input type="text" id="si_imei" placeholder="15-digit IMEI"/>
+        </div>
+        <div class="form-group">
+          <label>Condition</label>
+          <select id="si_condition">
+            <option value="">Select</option>
+            <option>Like New (9/10)</option>
+            <option>Good (8/10)</option>
+            <option>Fair (7/10)</option>
+            <option>Average (6/10)</option>
+            <option>Needs Repair</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Purchase Price (₹)</label>
+          <input type="number" id="si_buyPrice" placeholder="Amount paid"/>
+        </div>
+        <div class="form-group">
+          <label>Expected Sell Price (₹)</label>
+          <input type="number" id="si_sellPrice" placeholder="Target sell price"/>
+        </div>
+        <div class="form-group">
+          <label>Date of Purchase</label>
+          <input type="date" id="si_date"/>
+        </div>
+        <div class="form-group">
+          <label>Accessories Included</label>
+          <input type="text" id="si_accessories" placeholder="Charger, Box, Earphones..."/>
+        </div>
+      </div>
+      <div class="form-group" style="margin-top:16px;">
+        <label>Notes / Remarks</label>
+        <textarea id="si_notes" placeholder="Any additional notes about this phone..."></textarea>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="addStock()">📥 Add to Inventory</button>
+        <button class="btn btn-secondary" onclick="clearStockForm()">✕ Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== INVENTORY LIST ==================== -->
+  <div class="page" id="page-stock-list">
+    <div class="search-bar">
+      <input class="search-input" type="text" id="stockSearch" placeholder="🔍 Search by brand, model, IMEI, source..." oninput="renderStockTable()"/>
+      <select id="stockFilter" class="search-input" style="max-width:160px;" onchange="renderStockTable()">
+        <option value="">All Status</option>
+        <option value="In Stock">In Stock</option>
+        <option value="Sold">Sold</option>
+      </select>
+      <select id="stockSourceFilter" class="search-input" style="max-width:160px;" onchange="renderStockTable()">
+        <option value="">All Sources</option>
+        <option value="Dealer">Dealer</option>
+        <option value="Cashify">Cashify</option>
+        <option value="Customer">Customer</option>
+      </select>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">📦 Inventory List</div>
+        <button class="btn btn-secondary btn-sm" onclick="showPage('stock-in')">+ Add Phone</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>Brand / Model</th><th>Storage/RAM</th><th>IMEI</th>
+              <th>Source</th><th>Buy Price</th><th>Sell Price</th>
+              <th>Condition</th><th>Date</th><th>Status</th><th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="stockTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SELL PHONE ==================== -->
+  <div class="page" id="page-sell">
+    <div class="form-section">
+      <div class="form-title">💰 Record a Sale</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Select Phone from Inventory</label>
+          <select id="sell_phone" onchange="fillSellDetails()">
+            <option value="">-- Select Available Phone --</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Phone Details (Auto-filled)</label>
+          <input type="text" id="sell_phoneDetails" placeholder="Will fill automatically" readonly style="background:#111;"/>
+        </div>
+        <div class="form-group">
+          <label>Sell Price (₹)</label>
+          <input type="number" id="sell_price" placeholder="Final sale amount"/>
+        </div>
+        <div class="form-group">
+          <label>Payment Method</label>
+          <select id="sell_payment">
+            <option value="Cash">Cash</option>
+            <option value="UPI / GPay">UPI / GPay</option>
+            <option value="Bank Transfer">Bank Transfer</option>
+            <option value="Card">Card</option>
+            <option value="Partial (Cash+UPI)">Partial (Cash+UPI)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Date of Sale</label>
+          <input type="date" id="sell_date"/>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="form-title" style="font-size:14px; margin-bottom:14px;">👤 Customer Details</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Customer Name</label>
+          <input type="text" id="cust_name" placeholder="Full name"/>
+        </div>
+        <div class="form-group">
+          <label>Mobile Number</label>
+          <input type="tel" id="cust_mobile" placeholder="10-digit number"/>
+        </div>
+        <div class="form-group">
+          <label>Alternate Mobile</label>
+          <input type="tel" id="cust_mobile2" placeholder="Optional"/>
+        </div>
+        <div class="form-group">
+          <label>ID Proof Type</label>
+          <select id="cust_idType">
+            <option value="">Select</option>
+            <option>Aadhaar Card</option>
+            <option>PAN Card</option>
+            <option>Voter ID</option>
+            <option>Driving License</option>
+            <option>Passport</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>ID Proof Number</label>
+          <input type="text" id="cust_idNo" placeholder="ID number"/>
+        </div>
+      </div>
+      <div class="form-group" style="margin-top:14px;">
+        <label>Customer Address</label>
+        <textarea id="cust_address" placeholder="Full address with city, state, pincode..."></textarea>
+      </div>
+      <div class="form-group" style="margin-top:14px;">
+        <label>Warranty / Notes</label>
+        <input type="text" id="sell_notes" placeholder="e.g. 15 days warranty given, no warranty..."/>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="recordSale()">💰 Record Sale & Generate Bill</button>
+        <button class="btn btn-secondary" onclick="clearSellForm()">✕ Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SALES LIST ==================== -->
+  <div class="page" id="page-sales-list">
+    <div class="search-bar">
+      <input class="search-input" type="text" id="salesSearch" placeholder="🔍 Search by customer, phone, date..." oninput="renderSalesTable()"/>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🧾 Sales Records</div>
+        <div style="display:flex;gap:8px;">
+          <span style="font-size:13px;color:var(--muted);padding:7px 0;">Total Revenue: <strong id="totalRevenueDisplay" style="color:var(--green)">₹0</strong></span>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>Invoice</th><th>Phone</th><th>Customer</th>
+              <th>Mobile</th><th>Address</th><th>Sale Price</th>
+              <th>Buy Price</th><th>Profit</th><th>Date</th><th>Payment</th><th>Bill</th>
+            </tr>
+          </thead>
+          <tbody id="salesTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== BILLS ==================== -->
+  <div class="page" id="page-bills">
+    <div class="form-section">
+      <div class="form-title">🏪 Shop Details (for Bill Header)</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Shop Name</label>
+          <input type="text" id="shop_name" placeholder="Your Shop Name" value="Mobile Point"/>
+        </div>
+        <div class="form-group">
+          <label>Owner Name</label>
+          <input type="text" id="shop_owner" placeholder="Owner Name" value=""/>
+        </div>
+        <div class="form-group">
+          <label>Shop Mobile</label>
+          <input type="tel" id="shop_mobile" placeholder="Shop contact number"/>
+        </div>
+        <div class="form-group">
+          <label>Shop Address</label>
+          <input type="text" id="shop_address" placeholder="Full shop address"/>
+        </div>
+        <div class="form-group">
+          <label>GSTIN (Optional)</label>
+          <input type="text" id="shop_gst" placeholder="GST number if applicable"/>
+        </div>
+        <div class="form-group">
+          <label>Bill Tagline</label>
+          <input type="text" id="shop_tagline" placeholder="e.g. Trusted Second Hand Phones" value="Quality Second Hand Phones at Best Prices"/>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-success" onclick="saveShopDetails()">💾 Save Shop Details</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🖨 Recent Bills</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Invoice No</th><th>Customer</th><th>Phone</th><th>Amount</th><th>Date</th><th>Action</th></tr></thead>
+          <tbody id="billsTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end main -->
+
+<!-- ==================== BILL MODAL ==================== -->
+<div class="modal-overlay" id="billModal">
+  <div class="modal">
+    <div class="modal-header">
+      <strong>🖨 Sale Bill / Invoice</strong>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="btn btn-primary btn-sm" onclick="printBill()">🖨 Print</button>
+        <button class="modal-close" onclick="closeBillModal()">✕</button>
+      </div>
+    </div>
+    <div class="modal-body" id="billModalBody">
+      <div id="printArea"></div>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="modal-overlay" id="importModal">
+  <div class="modal">
+    <div class="modal-header">
+      <strong>⬆ Import from Excel</strong>
+      <button class="modal-close" onclick="closeImportModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="margin-bottom:16px;color:#555;font-size:14px;">Select the Excel file previously exported from this app to restore your data.</p>
+      <input type="file" id="importFile" accept=".xlsx" style="width:100%;padding:10px;border:1px dashed #ccc;border-radius:8px;background:#f9fafb;"/>
+      <div style="margin-top:16px;display:flex;gap:10px;">
+        <button class="btn btn-primary" onclick="importFromExcel()" style="background:linear-gradient(135deg,#4f6ef7,#7c3aed);color:#fff;">Import</button>
+        <button class="btn btn-secondary" onclick="closeImportModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ===================== DATA STORE =====================
+let db = {
+  stock: [],
+  sales: [],
+  shop: { name:'Mobile Point', owner:'', mobile:'', address:'', gst:'', tagline:'Quality Second Hand Phones at Best Prices' }
+};
+let invoiceCounter = 1001;
+
+function loadData() {
+  try {
+    const s = localStorage.getItem('phoneShopDB');
+    if (s) { db = JSON.parse(s); }
+    const ic = localStorage.getItem('phoneShopInvoice');
+    if (ic) invoiceCounter = parseInt(ic);
+    fillShopForm();
+  } catch(e) {}
+}
+function saveData() {
+  localStorage.setItem('phoneShopDB', JSON.stringify(db));
+  localStorage.setItem('phoneShopInvoice', invoiceCounter);
+}
+
+// ===================== NAVIGATION =====================
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  const tabs = document.querySelectorAll('.tab');
+  const map = {'dashboard':0,'stock-in':1,'stock-list':2,'sell':3,'sales-list':4,'bills':5};
+  if (map[name] !== undefined) tabs[map[name]].classList.add('active');
+  if (name === 'stock-list') renderStockTable();
+  if (name === 'sales-list') renderSalesTable();
+  if (name === 'sell') populateSellDropdown();
+  if (name === 'bills') renderBillsTable();
+  if (name === 'dashboard') renderDashboard();
+  updateBadges();
+}
+
+// ===================== TOAST =====================
+function toast(msg, type='info') {
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  const icons = {success:'✅', error:'❌', info:'ℹ️'};
+  t.innerHTML = `<span>${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+// ===================== BADGES =====================
+function updateBadges() {
+  document.getElementById('stockBadge').textContent = db.stock.filter(s=>s.status==='In Stock').length;
+  document.getElementById('salesBadge').textContent = db.sales.length;
+}
+
+// ===================== STOCK IN =====================
+function addStock() {
+  const source = document.getElementById('si_source').value;
+  const brand = document.getElementById('si_brand').value;
+  const model = document.getElementById('si_model').value.trim();
+  const buyPrice = document.getElementById('si_buyPrice').value;
+  const date = document.getElementById('si_date').value;
+
+  if (!source || !brand || !model || !buyPrice || !date) {
+    toast('Please fill: Source, Brand, Model, Buy Price, Date', 'error'); return;
+  }
+
+  const item = {
+    id: 'STK' + Date.now(),
+    source, brand, model,
+    color: document.getElementById('si_color').value,
+    storage: document.getElementById('si_storage').value,
+    ram: document.getElementById('si_ram').value,
+    imei: document.getElementById('si_imei').value.trim(),
+    condition: document.getElementById('si_condition').value,
+    buyPrice: parseFloat(buyPrice),
+    expectedSellPrice: parseFloat(document.getElementById('si_sellPrice').value)||0,
+    accessories: document.getElementById('si_accessories').value,
+    notes: document.getElementById('si_notes').value,
+    supplierName: document.getElementById('si_supplierName').value,
+    supplierMobile: document.getElementById('si_supplierMobile').value,
+    date, status: 'In Stock'
+  };
+  db.stock.push(item);
+  saveData(); updateBadges();
+  toast(`📥 ${brand} ${model} added to inventory!`, 'success');
+  clearStockForm();
+  renderDashboard();
+}
+
+function clearStockForm() {
+  ['si_source','si_supplierName','si_supplierMobile','si_brand','si_model','si_color',
+   'si_storage','si_ram','si_imei','si_condition','si_buyPrice','si_sellPrice',
+   'si_accessories','si_notes'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('si_date').value = new Date().toISOString().split('T')[0];
+}
+
+// ===================== STOCK TABLE =====================
+function renderStockTable() {
+  const q = (document.getElementById('stockSearch').value||'').toLowerCase();
+  const sf = document.getElementById('stockFilter').value;
+  const ssf = document.getElementById('stockSourceFilter').value;
+  let rows = db.stock.filter(s => {
+    const match = `${s.brand} ${s.model} ${s.imei} ${s.source} ${s.supplierName}`.toLowerCase().includes(q);
+    const statusOk = !sf || s.status === sf;
+    const srcOk = !ssf || s.source === ssf;
+    return match && statusOk && srcOk;
+  });
+  const tbody = document.getElementById('stockTableBody');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="11"><div class="empty"><div class="icon">📦</div>No phones found</div></td></tr>'; return;
+  }
+  tbody.innerHTML = rows.map((s,i) => `
+    <tr>
+      <td>${i+1}</td>
+      <td><strong>${s.brand}</strong> ${s.model}<br><small style="color:var(--muted)">${s.color||''} ${s.storage||''} ${s.ram||''}</small></td>
+      <td>${s.storage||'-'} / ${s.ram||'-'}</td>
+      <td style="font-family:monospace;font-size:12px;">${s.imei||'-'}</td>
+      <td><span class="badge badge-${s.source.toLowerCase().split(' ')[0]}">${s.source}</span><br><small style="color:var(--muted)">${s.supplierName||''}</small></td>
+      <td style="color:var(--orange)"><strong>₹${s.buyPrice.toLocaleString()}</strong></td>
+      <td style="color:var(--green)">₹${s.expectedSellPrice?s.expectedSellPrice.toLocaleString():'-'}</td>
+      <td>${s.condition||'-'}</td>
+      <td>${formatDate(s.date)}</td>
+      <td><span class="badge badge-${s.status==='Sold'?'sold':'stock'}">${s.status}</span></td>
+      <td>
+        ${s.status==='In Stock'?`<button class="btn btn-primary btn-sm" onclick="quickSell('${s.id}')">💰 Sell</button>`:''}
+        <button class="btn-icon" onclick="deleteStock('${s.id}')" title="Delete">🗑</button>
+      </td>
+    </tr>`).join('');
+}
+
+function deleteStock(id) {
+  if (!confirm('Delete this phone from inventory?')) return;
+  db.stock = db.stock.filter(s => s.id !== id);
+  saveData(); updateBadges(); renderStockTable(); renderDashboard();
+  toast('Deleted from inventory', 'info');
+}
+
+function quickSell(id) {
+  showPage('sell');
+  setTimeout(() => {
+    document.getElementById('sell_phone').value = id;
+    fillSellDetails();
+  }, 100);
+}
+
+// ===================== SELL =====================
+function populateSellDropdown() {
+  const sel = document.getElementById('sell_phone');
+  const available = db.stock.filter(s => s.status === 'In Stock');
+  sel.innerHTML = '<option value="">-- Select Available Phone --</option>' +
+    available.map(s => `<option value="${s.id}">${s.brand} ${s.model} (${s.storage||'?'}) - ₹${s.buyPrice.toLocaleString()} | ${s.condition||'?'}</option>`).join('');
+  document.getElementById('sell_date').value = new Date().toISOString().split('T')[0];
+}
+
+function fillSellDetails() {
+  const id = document.getElementById('sell_phone').value;
+  const phone = db.stock.find(s => s.id === id);
+  if (!phone) { document.getElementById('sell_phoneDetails').value = ''; return; }
+  document.getElementById('sell_phoneDetails').value = `${phone.brand} ${phone.model} | ${phone.storage||''} ${phone.ram||''} | ${phone.color||''} | IMEI: ${phone.imei||'N/A'}`;
+  if (phone.expectedSellPrice) document.getElementById('sell_price').value = phone.expectedSellPrice;
+}
+
+function recordSale() {
+  const phoneId = document.getElementById('sell_phone').value;
+  const sellPrice = document.getElementById('sell_price').value;
+  const custName = document.getElementById('cust_name').value.trim();
+  const custMobile = document.getElementById('cust_mobile').value.trim();
+  const custAddress = document.getElementById('cust_address').value.trim();
+  const date = document.getElementById('sell_date').value;
+
+  if (!phoneId || !sellPrice || !custName || !custMobile || !date) {
+    toast('Please fill: Phone, Sell Price, Customer Name, Mobile, Date', 'error'); return;
+  }
+
+  const phone = db.stock.find(s => s.id === phoneId);
+  if (!phone) { toast('Phone not found in inventory!', 'error'); return; }
+
+  const invoiceNo = 'INV-' + invoiceCounter++;
+  const sale = {
+    id: 'SL' + Date.now(),
+    invoiceNo,
+    phoneId,
+    phoneName: `${phone.brand} ${phone.model}`,
+    phoneDetails: `${phone.brand} ${phone.model} | ${phone.storage||''} ${phone.ram||''} | ${phone.color||''}`,
+    imei: phone.imei,
+    buyPrice: phone.buyPrice,
+    sellPrice: parseFloat(sellPrice),
+    profit: parseFloat(sellPrice) - phone.buyPrice,
+    payment: document.getElementById('sell_payment').value,
+    date,
+    customer: {
+      name: custName,
+      mobile: custMobile,
+      mobile2: document.getElementById('cust_mobile2').value,
+      address: custAddress,
+      idType: document.getElementById('cust_idType').value,
+      idNo: document.getElementById('cust_idNo').value
+    },
+    warranty: document.getElementById('sell_notes').value
+  };
+
+  phone.status = 'Sold';
+  phone.soldDate = date;
+  phone.soldTo = custName;
+  db.sales.push(sale);
+  saveData(); updateBadges();
+
+  toast(`✅ Sale recorded! Invoice: ${invoiceNo}`, 'success');
+  clearSellForm();
+  renderDashboard();
+  exportSaleToExcel(sale); // Auto-save bill to Excel
+  showBillModal(sale);
+}
+
+function clearSellForm() {
+  ['sell_phone','sell_price','sell_payment','sell_phoneDetails',
+   'cust_name','cust_mobile','cust_mobile2','cust_address','cust_idType','cust_idNo','sell_notes'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('sell_date').value = new Date().toISOString().split('T')[0];
+}
+
+// ===================== SALES TABLE =====================
+function renderSalesTable() {
+  const q = (document.getElementById('salesSearch').value||'').toLowerCase();
+  let rows = db.sales.filter(s =>
+    `${s.customer.name} ${s.phoneName} ${s.invoiceNo} ${s.date} ${s.customer.mobile}`.toLowerCase().includes(q)
+  );
+  const tbody = document.getElementById('salesTableBody');
+  let total = rows.reduce((a,s) => a+s.sellPrice, 0);
+  document.getElementById('totalRevenueDisplay').textContent = '₹' + total.toLocaleString();
+
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="12"><div class="empty"><div class="icon">💰</div>No sales recorded yet</div></td></tr>'; return;
+  }
+  tbody.innerHTML = rows.slice().reverse().map((s,i) => `
+    <tr>
+      <td>${rows.length - i}</td>
+      <td style="font-family:monospace;font-size:12px;color:var(--accent)">${s.invoiceNo}</td>
+      <td>${s.phoneName}<br><small style="color:var(--muted)">IMEI: ${s.imei||'N/A'}</small></td>
+      <td><strong>${s.customer.name}</strong></td>
+      <td>${s.customer.mobile}</td>
+      <td style="max-width:150px;font-size:12px;color:var(--muted)">${s.customer.address||'-'}</td>
+      <td style="color:var(--green)"><strong>₹${s.sellPrice.toLocaleString()}</strong></td>
+      <td style="color:var(--muted)">₹${s.buyPrice.toLocaleString()}</td>
+      <td class="${s.profit>=0?'profit':'loss'}">₹${s.profit.toLocaleString()}</td>
+      <td>${formatDate(s.date)}</td>
+      <td><span class="badge" style="background:rgba(79,110,247,.15);color:var(--accent)">${s.payment}</span></td>
+      <td>
+        <button class="btn btn-secondary btn-sm" onclick="showBillModal(db.sales.find(x=>x.id==='${s.id}'))">🖨 Bill</button>
+      </td>
+    </tr>`).join('');
+}
+
+// ===================== DASHBOARD =====================
+function renderDashboard() {
+  const inStock = db.stock.filter(s => s.status === 'In Stock').length;
+  const soldCount = db.sales.length;
+  const revenue = db.sales.reduce((a,s) => a+s.sellPrice, 0);
+  const profit = db.sales.reduce((a,s) => a+s.profit, 0);
+
+  document.getElementById('totalStock').textContent = inStock;
+  document.getElementById('totalSales').textContent = soldCount;
+  document.getElementById('totalRevenue').textContent = '₹' + revenue.toLocaleString();
+  document.getElementById('totalProfit').textContent = '₹' + profit.toLocaleString();
+  document.getElementById('totalProfit').className = 'stat-val ' + (profit >= 0 ? 'profit' : 'loss');
+
+  // Recent stock
+  const recent5Stock = db.stock.slice(-5).reverse();
+  const sb = document.getElementById('dashStockBody');
+  sb.innerHTML = recent5Stock.length ? recent5Stock.map(s => `
+    <tr><td>${s.brand} ${s.model}</td><td><span class="badge badge-${s.source.toLowerCase().split(' ')[0]}">${s.source}</span></td><td style="color:var(--orange)">₹${s.buyPrice.toLocaleString()}</td><td>${formatDate(s.date)}</td></tr>
+  `).join('') : '<tr><td colspan="4"><div class="empty"><div class="icon">📦</div>No stock</div></td></tr>';
+
+  // Recent sales
+  const recent5Sales = db.sales.slice(-5).reverse();
+  const ssb = document.getElementById('dashSalesBody');
+  ssb.innerHTML = recent5Sales.length ? recent5Sales.map(s => `
+    <tr><td>${s.phoneName}</td><td>${s.customer.name}</td><td style="color:var(--green)">₹${s.sellPrice.toLocaleString()}</td><td>${formatDate(s.date)}</td></tr>
+  `).join('') : '<tr><td colspan="4"><div class="empty"><div class="icon">💰</div>No sales</div></td></tr>';
+}
+
+// ===================== BILLS =====================
+function fillShopForm() {
+  document.getElementById('shop_name').value = db.shop.name || '';
+  document.getElementById('shop_owner').value = db.shop.owner || '';
+  document.getElementById('shop_mobile').value = db.shop.mobile || '';
+  document.getElementById('shop_address').value = db.shop.address || '';
+  document.getElementById('shop_gst').value = db.shop.gst || '';
+  document.getElementById('shop_tagline').value = db.shop.tagline || '';
+}
+
+function saveShopDetails() {
+  db.shop = {
+    name: document.getElementById('shop_name').value,
+    owner: document.getElementById('shop_owner').value,
+    mobile: document.getElementById('shop_mobile').value,
+    address: document.getElementById('shop_address').value,
+    gst: document.getElementById('shop_gst').value,
+    tagline: document.getElementById('shop_tagline').value
+  };
+  saveData();
+  toast('Shop details saved!', 'success');
+}
+
+function renderBillsTable() {
+  const tbody = document.getElementById('billsTableBody');
+  if (!db.sales.length) {
+    tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><div class="icon">🧾</div>No bills generated yet</div></td></tr>'; return;
+  }
+  tbody.innerHTML = db.sales.slice().reverse().map(s => `
+    <tr>
+      <td style="font-family:monospace;color:var(--accent)">${s.invoiceNo}</td>
+      <td>${s.customer.name}</td>
+      <td>${s.phoneName}</td>
+      <td style="color:var(--green)">₹${s.sellPrice.toLocaleString()}</td>
+      <td>${formatDate(s.date)}</td>
+      <td>
+        <button class="btn btn-primary btn-sm" onclick="showBillModal(db.sales.find(x=>x.id==='${s.id}'))">🖨 Print</button>
+      </td>
+    </tr>`).join('');
+}
+
+function showBillModal(sale) {
+  if (!sale) return;
+  const shop = db.shop;
+  const html = `
+    <div class="bill" id="printArea">
+      <div class="bill-header">
+        <div class="bill-shop-name">${shop.name || 'Mobile Shop'}</div>
+        <div class="bill-tagline">${shop.tagline || ''}</div>
+        <div class="bill-contact">
+          ${shop.owner ? 'Owner: ' + shop.owner + '  |  ' : ''}
+          ${shop.mobile ? '📞 ' + shop.mobile : ''}
+          ${shop.address ? '<br>📍 ' + shop.address : ''}
+          ${shop.gst ? '  |  GSTIN: ' + shop.gst : ''}
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;background:#f8f9fa;padding:14px;border-radius:8px;">
+        <div>
+          <div style="font-size:11px;color:#666;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Bill To</div>
+          <div style="font-weight:700;font-size:15px;">${sale.customer.name}</div>
+          <div>📞 ${sale.customer.mobile}${sale.customer.mobile2?' / '+sale.customer.mobile2:''}</div>
+          ${sale.customer.address?`<div style="font-size:12px;color:#555;margin-top:4px;">📍 ${sale.customer.address}</div>`:''}
+          ${sale.customer.idType?`<div style="font-size:12px;color:#555;">${sale.customer.idType}: ${sale.customer.idNo||''}</div>`:''}
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:22px;font-weight:800;color:#4f6ef7;">${sale.invoiceNo}</div>
+          <div style="font-size:13px;color:#555;">Date: <strong>${formatDate(sale.date)}</strong></div>
+          <div style="font-size:13px;color:#555;">Payment: <strong>${sale.payment}</strong></div>
+        </div>
+      </div>
+      <table class="bill-items" style="width:100%;border-collapse:collapse;margin:16px 0;">
+        <thead>
+          <tr style="background:#1a1d27;color:#fff;">
+            <th style="padding:9px 12px;text-align:left;font-size:12px;">#</th>
+            <th style="padding:9px 12px;text-align:left;font-size:12px;">Item Description</th>
+            <th style="padding:9px 12px;text-align:left;font-size:12px;">IMEI</th>
+            <th style="padding:9px 12px;text-align:right;font-size:12px;">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding:11px 12px;border:1px solid #e5e7eb;">1</td>
+            <td style="padding:11px 12px;border:1px solid #e5e7eb;">
+              <strong>${sale.phoneName}</strong><br>
+              <span style="font-size:12px;color:#666;">${sale.phoneDetails}</span>
+              ${sale.warranty?`<br><span style="font-size:11px;color:#ef4444;">⚠ ${sale.warranty}</span>`:''}
+            </td>
+            <td style="padding:11px 12px;border:1px solid #e5e7eb;font-family:monospace;font-size:12px;">${sale.imei||'N/A'}</td>
+            <td style="padding:11px 12px;border:1px solid #e5e7eb;text-align:right;font-weight:700;font-size:15px;">₹${sale.sellPrice.toLocaleString()}</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="display:flex;justify-content:flex-end;">
+        <table style="font-size:14px;">
+          <tr><td style="padding:4px 20px;color:#555;">Sub Total:</td><td style="text-align:right;">₹${sale.sellPrice.toLocaleString()}</td></tr>
+          <tr style="font-size:17px;font-weight:800;border-top:2px solid #222;">
+            <td style="padding:8px 20px;">Grand Total:</td>
+            <td style="text-align:right;color:#4f6ef7;">₹${sale.sellPrice.toLocaleString()}</td>
+          </tr>
+        </table>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:40px;text-align:center;">
+        <div><div style="border-top:1px solid #999;padding-top:6px;color:#555;font-size:12px;">Customer Signature</div></div>
+        <div><div style="border-top:1px solid #999;padding-top:6px;color:#555;font-size:12px;">Authorized Signature & Stamp</div></div>
+      </div>
+      <div style="margin-top:20px;border-top:1px solid #e5e7eb;padding-top:12px;text-align:center;font-size:11px;color:#888;">
+        This is a computer generated invoice. Thank you for your purchase!<br>
+        ${shop.mobile?'For support call: '+shop.mobile:''}
+      </div>
+    </div>`;
+  document.getElementById('billModalBody').innerHTML = html;
+  document.getElementById('billModal').classList.add('open');
+}
+
+function closeBillModal() {
+  document.getElementById('billModal').classList.remove('open');
+}
+
+function printBill() {
+  window.print();
+}
+
+// ===================== EXCEL EXPORT =====================
+function exportAllToExcel() {
+  const wb = XLSX.utils.book_new();
+
+  // STOCK SHEET
+  const stockData = [
+    ['ID','Brand','Model','Color','Storage','RAM','IMEI','Condition','Source','Supplier Name','Supplier Mobile','Buy Price (₹)','Expected Sell Price (₹)','Accessories','Date','Status','Notes'],
+    ...db.stock.map(s => [s.id, s.brand, s.model, s.color, s.storage, s.ram, s.imei, s.condition, s.source, s.supplierName, s.supplierMobile, s.buyPrice, s.expectedSellPrice, s.accessories, s.date, s.status, s.notes])
+  ];
+  const ws1 = XLSX.utils.aoa_to_sheet(stockData);
+  styleSheet(ws1, stockData[0].length);
+  XLSX.utils.book_append_sheet(wb, ws1, 'Inventory');
+
+  // SALES SHEET
+  const salesData = [
+    ['Invoice No','Phone Name','IMEI','Buy Price (₹)','Sell Price (₹)','Profit (₹)','Customer Name','Mobile','Alt Mobile','Address','ID Proof','ID Number','Payment Method','Warranty/Notes','Date'],
+    ...db.sales.map(s => [s.invoiceNo, s.phoneName, s.imei, s.buyPrice, s.sellPrice, s.profit, s.customer.name, s.customer.mobile, s.customer.mobile2, s.customer.address, s.customer.idType, s.customer.idNo, s.payment, s.warranty, s.date])
+  ];
+  const ws2 = XLSX.utils.aoa_to_sheet(salesData);
+  styleSheet(ws2, salesData[0].length);
+  XLSX.utils.book_append_sheet(wb, ws2, 'Sales Records');
+
+  // SUMMARY SHEET
+  const totalRevenue = db.sales.reduce((a,s)=>a+s.sellPrice,0);
+  const totalCost = db.sales.reduce((a,s)=>a+s.buyPrice,0);
+  const totalProfit = db.sales.reduce((a,s)=>a+s.profit,0);
+  const summaryData = [
+    ['PHONE SHOP SUMMARY REPORT'],
+    ['Shop Name', db.shop.name],
+    ['Owner', db.shop.owner],
+    ['Generated On', new Date().toLocaleDateString('en-IN')],
+    [''],
+    ['Metric','Value'],
+    ['Total Phones in Stock', db.stock.filter(s=>s.status==='In Stock').length],
+    ['Total Phones Purchased', db.stock.length],
+    ['Total Phones Sold', db.sales.length],
+    ['Total Revenue (₹)', totalRevenue],
+    ['Total Cost (₹)', totalCost],
+    ['Net Profit (₹)', totalProfit],
+  ];
+  const ws3 = XLSX.utils.aoa_to_sheet(summaryData);
+  XLSX.utils.book_append_sheet(wb, ws3, 'Summary');
+
+  const fname = `PhoneShop_${db.shop.name||'Data'}_${new Date().toISOString().split('T')[0]}.xlsx`;
+  XLSX.writeFile(wb, fname);
+  toast('📊 Excel exported: ' + fname, 'success');
+}
+
+function styleSheet(ws, cols) {
+  // Set column widths
+  ws['!cols'] = Array(cols).fill({wch: 18});
+}
+
+function exportSaleToExcel(sale) {
+  // Silently update the Bills sheet - data is preserved in localStorage
+  // Full export via Export Excel button
+}
+
+// ===================== IMPORT FROM EXCEL =====================
+function openImportModal() {
+  document.getElementById('importModal').classList.add('open');
+}
+function closeImportModal() {
+  document.getElementById('importModal').classList.remove('open');
+}
+
+function importFromExcel() {
+  const file = document.getElementById('importFile').files[0];
+  if (!file) { toast('Please select a file', 'error'); return; }
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const wb = XLSX.read(e.target.result, {type:'binary'});
+      // Import inventory
+      const ws1 = wb.Sheets['Inventory'];
+      if (ws1) {
+        const rows = XLSX.utils.sheet_to_json(ws1);
+        db.stock = rows.map(r => ({
+          id: r['ID'] || 'STK'+Date.now()+Math.random(),
+          brand: r['Brand']||'', model: r['Model']||'', color: r['Color']||'',
+          storage: r['Storage']||'', ram: r['RAM']||'', imei: r['IMEI']||'',
+          condition: r['Condition']||'', source: r['Source']||'',
+          supplierName: r['Supplier Name']||'', supplierMobile: r['Supplier Mobile']||'',
+          buyPrice: parseFloat(r['Buy Price (₹)'])||0,
+          expectedSellPrice: parseFloat(r['Expected Sell Price (₹)'])||0,
+          accessories: r['Accessories']||'', date: r['Date']||'',
+          status: r['Status']||'In Stock', notes: r['Notes']||''
+        }));
+      }
+      // Import sales
+      const ws2 = wb.Sheets['Sales Records'];
+      if (ws2) {
+        const rows2 = XLSX.utils.sheet_to_json(ws2);
+        db.sales = rows2.map(r => ({
+          id: 'SL'+Date.now()+Math.random(),
+          invoiceNo: r['Invoice No']||'',
+          phoneName: r['Phone Name']||'', imei: r['IMEI']||'',
+          buyPrice: parseFloat(r['Buy Price (₹)'])||0,
+          sellPrice: parseFloat(r['Sell Price (₹)'])||0,
+          profit: parseFloat(r['Profit (₹)'])||0,
+          payment: r['Payment Method']||'Cash',
+          date: r['Date']||'', warranty: r['Warranty/Notes']||'',
+          phoneDetails: r['Phone Name']||'',
+          customer: {
+            name: r['Customer Name']||'', mobile: r['Mobile']||'',
+            mobile2: r['Alt Mobile']||'', address: r['Address']||'',
+            idType: r['ID Proof']||'', idNo: r['ID Number']||''
+          }
+        }));
+      }
+      saveData(); updateBadges(); renderDashboard();
+      closeImportModal();
+      toast(`✅ Imported: ${db.stock.length} phones, ${db.sales.length} sales`, 'success');
+    } catch(err) {
+      toast('Import failed: ' + err.message, 'error');
+    }
+  };
+  reader.readAsBinaryString(file);
+}
+
+// ===================== UTILS =====================
+function formatDate(d) {
+  if (!d) return '-';
+  try {
+    const parts = d.split('-');
+    if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    return d;
+  } catch(e) { return d; }
+}
+
+// ===================== INIT =====================
+window.onload = function() {
+  loadData();
+  document.getElementById('si_date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('sell_date').value = new Date().toISOString().split('T')[0];
+  updateBadges();
+  renderDashboard();
+};
+</script>
+</body>
+</html>
